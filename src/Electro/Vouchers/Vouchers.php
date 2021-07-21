@@ -2,33 +2,28 @@
 
 namespace Electro\Vouchers;
 
+use Electro\Vouchers\Events\PlayerListener;
+use Electro\Vouchers\Interfaces\Messages;
+
 use pocketmine\item\Item;
 use pocketmine\nbt\tag\StringTag;
 use pocketmine\Player;
-use pocketmine\event\player\PlayerInteractEvent;
-
 use pocketmine\plugin\PluginBase;
 
-use pocketmine\command\Command;
-use pocketmine\command\CommandSender;
-use pocketmine\command\ConsoleCommandSender;
+use pocketmine\command\{Command, CommandSender};
 
-use pocketmine\event\Listener;
-
-class Vouchers extends PluginBase implements Listener{
-
-    public $player;
+class Vouchers extends PluginBase{
 
     public function onEnable()
     {
-        $this->getServer()->getPluginManager()->registerEvents($this, $this);
+        $this->getServer()->getPluginManager()->registerEvents(new PlayerListener(), $this);
     }
 
     public function onCommand(CommandSender $sender, Command $command, string $label, array $args): bool{
         switch($command->getName()) {
             case "voucher":
                 if (!$sender->hasPermission("vouchers.cmd")){
-                    $sender->sendMessage("§cYou do not have permissions to use this command");
+                    $sender->sendMessage(Messages::PERMISSION);
                     return true;
                 }
                 if (!isset($args[0])){
@@ -38,28 +33,31 @@ class Vouchers extends PluginBase implements Listener{
                 switch (strtolower($args[0])) {
                     case "create":
                         if (!isset($args[1])) {
-                            $sender->sendMessage("§l§cUsage: §r§a/voucher create <Player> <VoucherName> <Command>");
-                            return true;
+                            $sender->sendMessage(Messages::USAGE);
+                            return false;
                         }
                         if (!$this->getServer()->getPlayer($args[1]) instanceof Player) {
-                            $sender->sendMessage("§l§cERROR: §r§aYou have entered an invalid Player Username.");
-                            return true;
+                            $sender->sendMessage(Messages::INVALID_PLAYER_NAME);
+                            return false;
                         }
                         if (!isset($args[2])) {
-                            $sender->sendMessage("§l§cERROR: §r§aYou have entered an invalid Voucher Name.");
-                            return true;
+                            $sender->sendMessage(Messages::INVALID_VOUCHER_NAME);
+                            return false;
                         }
                         if (!isset($args[3])) {
-                            $sender->sendMessage("§l§cERROR: §r§aYou have entered an invalid Command.");
-                            return true;
+                            $sender->sendMessage(Messages::INVALID_COMMAND_NAME);
+                            return false;
                         }
 
                         $player = $this->getServer()->getPlayer($args[1]);
                         $player->sendMessage("§aYou have given " . $player->getname() . " a " . $args[2] . " Voucher!");
                         $item = Item::get(Item::PAPER);
-                        $item->setCustomName("§r§l§6" . $args[2] . " Voucher");
-                        $item->setLore(["§r§7Right Click/Tap To Claim This Voucher"]);
-                        $item->setNamedTagEntry(new StringTag("Creator", $sender->getName()));
+
+                        $item
+                            ->setCustomName("§r§l§6" . $args[2] . " Voucher")
+                            ->setLore(["§r§7Right Click/Tap To Claim This Voucher"])
+                            ->setNamedTagEntry(new StringTag("Creator", $sender->getName()));
+
                         $item->setNamedTagEntry(new StringTag("Name", $args[2]));
                         array_shift($args);
                         array_shift($args);
@@ -70,34 +68,21 @@ class Vouchers extends PluginBase implements Listener{
                         break;
                     case "info":
                         if (!$sender instanceof Player){
-                            $sender->sendMessage("§cYou must be in-game to run this command");
-                            return true;
+                            $sender->sendMessage(Messages::COMMAND_INGAME);
+                            return false;
                         }
                         $item = $sender->getInventory()->getItemInHand();
                         if (!$item->getNamedTag()->hasTag("Voucher")) {
-                            $sender->sendMessage("§l§cError: §r§aYou must be holding a Voucher");
-                            return true;
+                            $sender->sendMessage(Messages::HOLDING_VOUCHER);
+                            return false;
                         }
                         $sender->sendMessage("§aVoucher Created By: §b" . $item->getNamedTag()->getString("Creator") . "\n§aVoucher Command: §b/" . $item->getNamedTag()->getString("Command"));
                         break;
                     default:
-                        $sender->sendMessage("§l§cUsage: §r§a/voucher <create/info>");
-                        return true;
+                        $sender->sendMessage(Messages::USAGE_BASE);
+                        return false;
                 }
         }
         return true;
-    }
-
-    public function onInteract(PlayerInteractEvent $event)
-    {
-        $player = $event->getPlayer();
-        $item = $event->getItem();
-        if (!$item->getNamedTag()->hasTag("Voucher")) {
-            return true;
-        }
-        $item->setCount($item->getCount() - 1);
-        $player->getInventory()->setItemInHand($item);
-        $player->sendMessage("§aYou have claimed a " . $item->getNamedTag()->getString("Name") . " Voucher!");
-        $this->getServer()->dispatchCommand(new ConsoleCommandSender(), str_replace("{player}", '"' . $player->getName() . '"', $item->getNamedTag()->getString("Command")));
     }
 }
