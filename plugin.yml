@@ -1,0 +1,16 @@
+main : Electro\Vouchers\Vouchers
+name: Vouchers
+version: 1.0.0
+api: 3.0.0
+Author: Electro
+
+commands:
+  voucher:
+    description: Create a voucher
+    usage: /voucher <create/info>
+    permission: vouchers.cmd
+    
+permissions:
+  vouchers.cmd:
+    default: op
+    description: Permission to use the Voucher command
