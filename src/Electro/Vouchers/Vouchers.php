@@ -23,7 +23,6 @@ class Vouchers extends PluginBase implements Listener{
 
     public function onEnable()
     {
-        date_default_timezone_set($this->getConfig()->get("TimeZone"));
         $this->saveDefaultConfig();
         $this->getServer()->getPluginManager()->registerEvents($this, $this);
     }
@@ -84,7 +83,7 @@ class Vouchers extends PluginBase implements Listener{
                             $sender->sendMessage("§l§cError: §r§aYou must be holding a Voucher");
                             return true;
                         }
-                        $sender->sendMessage("§aVoucher Created By: §b" . $item->getNamedTag()->getString("Creator") . "\n§aVoucher Creation Date/Time: §b" . date("Y-m-d H:i")  . "\n§aVoucher Command: §b/" . $item->getNamedTag()->getString("Command"));
+                        $sender->sendMessage("§aVoucher Created By: §b" . $item->getNamedTag()->getString("Creator") . "\n§aVoucher Command: §b/" . $item->getNamedTag()->getString("Command"));
                         break;
                     default:
                         $sender->sendMessage("§l§cUsage: §r§a/voucher <create/info>");
