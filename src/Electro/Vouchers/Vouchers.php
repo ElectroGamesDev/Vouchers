@@ -3,15 +3,20 @@
 namespace Electro\Vouchers;
 
 use pocketmine\item\Item;
-use pocketmine\nbt\tag\StringTag;
-use pocketmine\Player;
 use pocketmine\event\player\PlayerInteractEvent;
 
+use pocketmine\item\ItemIds;
+use pocketmine\item\VanillaItems;
+use pocketmine\lang\Language;
+use pocketmine\nbt\tag\StringTag;
+
+use pocketmine\item\ItemFactory;
+use pocketmine\player\Player;
 use pocketmine\plugin\PluginBase;
 
 use pocketmine\command\Command;
 use pocketmine\command\CommandSender;
-use pocketmine\command\ConsoleCommandSender;
+use pocketmine\console\ConsoleCommandSender;
 
 use pocketmine\event\Listener;
 
@@ -19,10 +24,9 @@ use pocketmine\utils\Config;
 
 class Vouchers extends PluginBase implements Listener{
 
-    public $player;
-
-    public function onEnable()
+    public function onEnable() : void
     {
+        date_default_timezone_set($this->getConfig()->get("TimeZone"));
         $this->saveDefaultConfig();
         $this->getServer()->getPluginManager()->registerEvents($this, $this);
     }
@@ -44,7 +48,7 @@ class Vouchers extends PluginBase implements Listener{
                             $sender->sendMessage("§l§cUsage: §r§a/voucher create <Player> <VoucherName> <Command>");
                             return true;
                         }
-                        if (!$this->getServer()->getPlayer($args[1]) instanceof Player) {
+                        if (!$this->getServer()->getPlayerExact($args[1]) instanceof Player) {
                             $sender->sendMessage("§l§cERROR: §r§aYou have entered an invalid Player Username.");
                             return true;
                         }
@@ -57,20 +61,18 @@ class Vouchers extends PluginBase implements Listener{
                             return true;
                         }
 
-                        $player = $this->getServer()->getPlayer($args[1]);
+                        $player = $this->getServer()->getPlayerExact($args[1]);
                         $player->sendMessage("§aYou have given " . $player->getname() . " a " . $args[2] . " Voucher!");
-                        $item = Item::get(Item::PAPER);
+                        $item = VanillaItems::PAPER();
                         $item->setCustomName(str_replace("{VoucherName}", $args[2], $this->getConfig()->get("Voucher_Name")));
-                        #$item->setCustomName("§r§l§6" . $args[2] . " Voucher");
                         $item->setLore([str_replace("{VoucherName}", $args[2], $this->getConfig()->get("Voucher_Lore"))]);
-                        #$item->setLore(["§r§7Right Click/Tap To Claim This Voucher"]);
-                        $item->setNamedTagEntry(new StringTag("Creator", $sender->getName()));
-                        $item->setNamedTagEntry(new StringTag("Name", $args[2]));
+                        $item->getNamedTag()->setString("Creator", $sender->getName());
+                        $item->getNamedTag()->setString("Name", $args[2]);
                         array_shift($args);
                         array_shift($args);
                         array_shift($args);
-                        $item->setNamedTagEntry(new StringTag("Command", trim(implode(" ", $args))));
-                        $item->setNamedTagEntry(new StringTag("Voucher"));
+                        $item->getNamedTag()->setString("Command", trim(implode(" ", $args)));
+                        $item->getNamedTag()->setString("Voucher", "Voucher");
                         $player->getInventory()->addItem($item);
                         break;
                     case "info":
@@ -79,11 +81,11 @@ class Vouchers extends PluginBase implements Listener{
                             return true;
                         }
                         $item = $sender->getInventory()->getItemInHand();
-                        if (!$item->getNamedTag()->hasTag("Voucher")) {
+                        if (!$item->getNamedTag()->getString("Voucher")) {
                             $sender->sendMessage("§l§cError: §r§aYou must be holding a Voucher");
                             return true;
                         }
-                        $sender->sendMessage("§aVoucher Created By: §b" . $item->getNamedTag()->getString("Creator") . "\n§aVoucher Command: §b/" . $item->getNamedTag()->getString("Command"));
+                        $sender->sendMessage("§aVoucher Created By: §b" . $item->getNamedTag()->getString("Creator") . "\n§aVoucher Creation Date/Time: §b" . date("Y-m-d H:i")  . "\n§aVoucher Command: §b/" . $item->getNamedTag()->getString("Command"));
                         break;
                     default:
                         $sender->sendMessage("§l§cUsage: §r§a/voucher <create/info>");
@@ -97,12 +99,12 @@ class Vouchers extends PluginBase implements Listener{
     {
         $player = $event->getPlayer();
         $item = $event->getItem();
-        if (!$item->getNamedTag()->hasTag("Voucher")) {
+        if (!$item->getNamedTag()->getTag("Voucher")) {
             return true;
         }
         $item->setCount($item->getCount() - 1);
         $player->getInventory()->setItemInHand($item);
         $player->sendMessage(str_replace("{VoucherName}", $item->getNamedTag()->getString("Name"), $this->getConfig()->get("Voucher_Claimed")));
-        $this->getServer()->dispatchCommand(new ConsoleCommandSender(), str_replace("{player}", '"' . $player->getName() . '"', $item->getNamedTag()->getString("Command")));
+        $this->getServer()->dispatchCommand(new ConsoleCommandSender($this->getServer(), $this->getServer()->getLanguage()), str_replace("{player}", '"' . $player->getName() . '"', $item->getNamedTag()->getString("Command")));
     }
 }
