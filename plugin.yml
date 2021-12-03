@@ -14,3 +14,4 @@ permissions:
   vouchers.cmd:
     default: op
     description: Permission to use the Voucher command
+
