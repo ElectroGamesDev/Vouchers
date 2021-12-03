@@ -2,15 +2,10 @@
 
 namespace Electro\Vouchers;
 
-use pocketmine\item\Item;
 use pocketmine\event\player\PlayerInteractEvent;
 
-use pocketmine\item\ItemIds;
 use pocketmine\item\VanillaItems;
-use pocketmine\lang\Language;
-use pocketmine\nbt\tag\StringTag;
 
-use pocketmine\item\ItemFactory;
 use pocketmine\player\Player;
 use pocketmine\plugin\PluginBase;
 
@@ -19,8 +14,6 @@ use pocketmine\command\CommandSender;
 use pocketmine\console\ConsoleCommandSender;
 
 use pocketmine\event\Listener;
-
-use pocketmine\utils\Config;
 
 class Vouchers extends PluginBase implements Listener{
 
