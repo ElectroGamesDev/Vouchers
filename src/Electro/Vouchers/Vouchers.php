@@ -19,7 +19,6 @@ class Vouchers extends PluginBase implements Listener{
 
     public function onEnable() : void
     {
-        date_default_timezone_set($this->getConfig()->get("TimeZone"));
         $this->saveDefaultConfig();
         $this->getServer()->getPluginManager()->registerEvents($this, $this);
     }
