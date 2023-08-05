@@ -73,7 +73,7 @@ class Vouchers extends PluginBase implements Listener{
                             return true;
                         }
                         $item = $sender->getInventory()->getItemInHand();
-                        if (!$item->getNamedTag()->getString("Voucher")) {
+                        if (!$item->getNamedTag()->getTag("Voucher")) {
                             $sender->sendMessage("§l§cError: §r§aYou must be holding a Voucher");
                             return true;
                         }
